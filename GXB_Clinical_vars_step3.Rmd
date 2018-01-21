@@ -1,0 +1,2398 @@
+---
+title: "GXB_Clinical_Vars_step3"
+author: "Jessica Roelands"
+date: "11 April 2016"
+output: html_document
+---
+
+Load all datasets
+```{r}
+BOR <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE45255_appended.meta.data.csv")
+EMC1 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE2034_appended.meta.data.csv")
+EMC2 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE5327_appended.meta.data.csv")
+EMCT <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE12093_appended.meta.data.csv")
+GUYT2 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE9195_appended.meta.data.csv")
+MAINZ <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE11121_appended.meta.data.csv")
+STO <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE1456.GPL96_appended.meta.data.csv")
+STO2 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE1456.GPL97_appended.meta.data.csv")
+MSKCC <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE2603_appended.meta.data.csv")
+YAU1 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE8193_appended.meta.data.csv")
+PMC <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE6532.GPL96_appended.meta.data.csv")
+PMC2 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE6532.GPL97_appended.meta.data.csv")
+PMC3 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE6532.GPL570_appended.meta.data.csv")
+TBIG <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE7390_appended.meta.data.csv")
+YAU2 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE7378_appended.meta.data.csv")
+UPSI <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE4922.GPL96_appended.meta.data.csv")
+UPSI2 <- read.csv("C:\\Users\\lenovo s500\\Dropbox (TBI-Lab)\\DB-LAB\\Projects\\GXB breast cancer\\sample annotation files\\GSE4922.GPL97_appended.meta.data.csv")
+```
+
+
+View original names of first dataset **BOR**
+```{r}
+names(BOR)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(BOR$Sample.ID, BOR$Barcode)
+BOR$Barcode <- NULL
+```
+
+
+```{r}
+BOR$X.Sample.Title.2 <- NULL
+```
+
+Change variable values for tumor size from mm to cm, so divide by 10.
+```{r}
+BOR$Size..mm. <- signif(BOR$Size..mm./10, digits = 2)
+```
+
+Rename the variable to cm instead of mm.
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(BOR) <- c("sample.ID", 
+                "array_sample_id",
+                "sample_title",
+                "disease_specific_survival_years",
+                "treatment_adjuvant",
+                "characteristics_endocrine?",
+                "chemo?",
+                "disease_free_survival_event",
+                "disease_free_survival_years",
+                "distant_met_free_survival_event",
+                "distant_met_free_survival_years",
+                "breast_cancer_cause_of_death",
+                "ER_status",
+                "HER2_status",
+                "histology_differentiation_grade",
+                "histologic_diagnosis",
+                "lymph_node_status",
+                "age_at_initial_pathologic_diagnosis",
+                "PR_status",
+                "tumor_size_cm",
+                "type_treatment",
+                "IMS",
+                "DMFS_10Y_TIME",
+                "DMFS_10Y_EVENT",
+                "IBS",
+                "IDS",
+                "ICR")
+```
+
+Add variable pathology_T_stage.
+```{r}
+BOR$pathology_T_stage[is.na(BOR$tumor_size_cm)] <- NA
+BOR$pathology_T_stage[BOR$tumor_size_cm <= 0.1] <- "T1mi"
+BOR$pathology_T_stage[BOR$tumor_size_cm > 0.1 & BOR$tumor_size_cm <= 0.5] <- "T1a"
+BOR$pathology_T_stage[BOR$tumor_size_cm > 0.5 & BOR$tumor_size_cm <= 1] <- "T1b"
+BOR$pathology_T_stage[BOR$tumor_size_cm > 1 & BOR$tumor_size_cm <= 2] <- "T1c"
+BOR$pathology_T_stage[BOR$tumor_size_cm > 2 & BOR$tumor_size_cm <= 5] <- "T2"
+BOR$pathology_T_stage[BOR$tumor_size_cm > 5] <- "T3/T4"
+``` 
+
+Adjust values for variable characteristics_endocrine?
+```{r}
+BOR$`characteristics_endocrine?` <- as.factor(gsub('.*\\:', '', BOR$`characteristics_endocrine?`))
+levels(BOR$`characteristics_endocrine?`) 
+levels(BOR$`characteristics_endocrine?`) <- c("no", "yes", NA)
+```
+
+Adjust values for variable chemo?
+```{r}
+BOR$`chemo?` <- as.factor(BOR$`chemo?`)
+levels(BOR$`chemo?`)
+levels(BOR$`chemo?`) <- c("no", "yes")
+```
+
+Adjust values for variable disease_free_survival_event to "DiseaseFree" or "Recurred/Progressed"
+```{r}
+BOR$disease_free_survival_event <- as.factor(BOR$disease_free_survival_event)
+levels(BOR$disease_free_survival_event)
+levels(BOR$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable distant_met_free_survival_event to "DistantMetastasisFree" or "DistantMetastasis"
+```{r}
+BOR$distant_met_free_survival_event <- as.factor(BOR$distant_met_free_survival_event)
+levels(BOR$distant_met_free_survival_event)
+levels(BOR$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Adjust values for variable HER2_status to "HER2+" and "HER2-"
+```{r}
+BOR$HER2_status <- as.factor(BOR$HER2_status)
+levels(BOR$HER2_status)
+levels(BOR$HER2_status) <- c("HER2-", "HER2+")
+```
+
+Adjust values for variable PR_status to "PR+" and "PR-"
+```{r}
+BOR$PR_status <- as.factor(BOR$PR_status)
+levels(BOR$PR_status)
+levels(BOR$PR_status) <- c("PR-", "PR+")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+BOR$DMFS_10Y_EVENT <- as.factor(BOR$DMFS_10Y_EVENT)
+levels(BOR$DMFS_10Y_EVENT)
+levels(BOR$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+BOR[BOR == ""] <- NA
+BOR[BOR == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival_years", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variable which is included in the fixed list of variables, but which is not present in the BOR dataset using the setdiff function.
+Add this variable(s) to the BOR dataset with NA values for all fields.
+```{r}
+BOR[, setdiff(refcols, names(BOR))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(BOR), but not in refcols.)
+```{r}
+BOR <- BOR[, c(refcols, setdiff(names(BOR), refcols))]
+```
+
+Save dataframe BOR with newly assigned variable names as csv file.
+```{r}
+write.csv(BOR, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE45255_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+----------------------------------------------------------------------------------------------------------------
+
+View original variable names in **EMC1** dataset
+```{r}
+names(EMC1)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(EMC1$Sample.ID, EMC1$Barcode)
+EMC1$Barcode <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(EMC1) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "bone_metastasis_event",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR")
+```
+
+Adjust values for variable bone_metastasis_event to "BoneMetastasisFree" or "BoneMetastasis"
+```{r}
+EMC1$bone_metastasis_event <- as.factor(EMC1$bone_metastasis_event)
+levels(EMC1$bone_metastasis_event)
+levels(EMC1$bone_metastasis_event) <- c("BoneMetastasisFree", "BoneMetastasis")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+EMC1$DMFS_10Y_EVENT <- as.factor(EMC1$DMFS_10Y_EVENT)
+levels(EMC1$DMFS_10Y_EVENT)
+levels(EMC1$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+EMC1[EMC1 == ""] <- NA
+EMC1[EMC1 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+EMC1[, setdiff(refcols, names(EMC1))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+EMC1 <- EMC1[, c(refcols, setdiff(names(EMC1), refcols))]
+```
+
+Save dataframe EMC1 with newly assigned variable names as csv file.
+```{r}
+write.csv(EMC1, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE2034_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+
+View original variable names in dataset **EMC2**
+```{r}
+names(EMC2)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(EMC2$Sample.ID, EMC2$Barcode)
+EMC2$Barcode <- NULL
+```
+
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(EMC2) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "sample_title2",
+                 "series",
+                 "lung_metastasis_gene_expression_signature_status",
+                 "lung_metastasis_event",
+                 "lung_met_first_event",
+                 "lung_met_free_survival_years",
+                 "disease_free_survival_event",
+                 "disease_free_survival_years",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR")
+```
+
+For variable lung_metastasis_event, change values to "LungMetastasisFree" and "LungMetastasis".
+```{r}
+EMC2$lung_metastasis_event <- as.factor(EMC2$lung_metastasis_event)
+levels(EMC2$lung_metastasis_event)
+levels(EMC2$lung_metastasis_event) <- c("LungMetastasisFree", "LungMetastasis")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+EMC2$disease_free_survival_event <- as.factor(EMC2$disease_free_survival_event)
+levels(EMC2$disease_free_survival_event)
+levels(EMC2$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable lung_met_first_event 
+```{r}
+EMC2$lung_met_first_event <- as.factor(EMC2$lung_met_first_event)
+levels(EMC2$lung_met_first_event)
+levels(EMC2$lung_met_first_event) <- c("no", "yes")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+EMC2$DMFS_10Y_EVENT <- as.factor(EMC2$DMFS_10Y_EVENT)
+levels(EMC2$DMFS_10Y_EVENT)
+levels(EMC2$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+EMC2[EMC2 == ""] <- NA
+EMC2[EMC2 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+EMC2[, setdiff(refcols, names(EMC2))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+EMC2 <- EMC2[, c(refcols, setdiff(names(EMC2), refcols))]
+```
+
+Save dataframe EMC2 with newly assigned variable names as csv file.
+```{r}
+write.csv(EMC2, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE5327_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+---------------------------------------------------------------------------------------------
+
+View original variable names in dataset **EMCT**
+```{r}
+names(EMCT)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(EMCT$Sample.ID, EMCT$Barcode)
+EMCT$Barcode <- NULL
+```
+
+Variable breast.cancer is an indicator whether the sample is breast cancer or not. For all samples in the dataset values is breast cancer.
+Check this and remove co. All samples in GXB are per definition breast cancer, else would not be included in the GXB.
+
+```{r}
+EMCT$Breast.cancer
+EMCT$Breast.cancer <- NULL
+```
+
+Variable DFS actually consist of 2 different variables, disease_free_survival_event and disease_free_survival. Split into 2 columns and delete original column.
+```{r}
+EMCT$disease_free_survival_event <- sapply(strsplit(as.character(EMCT$DFS), ","), "[", 1)
+EMCT$disease_free_survival_days <- sapply(strsplit(as.character(EMCT$DFS), ","), "[", 2)
+EMCT$DFS <- NULL
+```
+
+Extract numeric values from disease_free_survival_event and disease_free_survival_days.
+```{r}
+EMCT$disease_free_survival_event <- as.numeric(gsub("\\D", "", EMCT$disease_free_survival_event))
+EMCT$disease_free_survival_days <- as.numeric(gsub("\\D", "", EMCT$disease_free_survival_days))
+```
+
+Adjust values for variable disease_free_survival_event to "DiseaseFree" and "Progressed/Recurred"
+```{r}
+EMCT$disease_free_survival_event <- as.factor(EMCT$disease_free_survival_event)
+levels(EMCT$disease_free_survival_event)
+levels(EMCT$disease_free_survival_event) <- c("DiseaseFree", "Progressed/Recurred") 
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(EMCT) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR",
+                 "disease_free_survival_event",
+                 "disease_free_survival_days")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+EMCT$DMFS_10Y_EVENT <- as.factor(EMCT$DMFS_10Y_EVENT)
+levels(EMCT$DMFS_10Y_EVENT)
+levels(EMCT$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+EMCT[EMCT == ""] <- NA
+EMCT[EMCT == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_days", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+EMCT[, setdiff(refcols, names(EMCT))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+EMCT <- EMCT[, c(refcols, setdiff(names(EMCT), refcols))]
+```
+
+Save dataframe EMCT with newly assigned variable names as csv file.
+```{r}
+write.csv(EMCT, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE12093_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **GUYT2**
+```{r}
+names(GUYT2)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(GUYT2$Sample.ID, GUYT2$Barcode)
+GUYT2$Barcode <- NULL
+```
+
+Variable "Samplename" seems to be identical to variable "X.Sample.Title".
+Check this and drop "Samplename" variable.
+```{r}
+identical(GUYT2$X.Sample.Title, GUYT2$Samplename)
+GUYT2$Samplename <- NULL
+```
+
+Variable "E" actually exists of two different variables, disease_free_survival_event; distant_met_free_survival_event.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+GUYT2$distant_met_free_survival_event <- sapply(strsplit(as.character(GUYT2$E), ","), "[", 1)
+GUYT2$disease_free_survival_event <- sapply(strsplit(as.character(GUYT2$E), ","), "[", 2)
+GUYT2$E <- NULL
+```
+
+Extract only numeric digits from values. Values before exaction:"[dmfs:0"" and "rfs:1]"
+After extraction 0 and 1.
+```{r}
+GUYT2$distant_met_free_survival_event <- as.numeric(gsub("\\D", "", GUYT2$distant_met_free_survival_event))
+GUYT2$disease_free_survival_event <- as.numeric(gsub("\\D", "", GUYT2$disease_free_survival_event))
+```
+
+Adjust values for variable disease_free_survival_event to "DiseaseFree" or "Recurred/Progressed"
+```{r}
+GUYT2$disease_free_survival_event <- as.factor(GUYT2$disease_free_survival_event)
+levels(GUYT2$disease_free_survival_event)
+levels(GUYT2$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable distant_met_free_survival_event to "DistantMetastasisFree" or "DistantMetastasis"
+```{r}
+GUYT2$distant_met_free_survival_event <- as.factor(GUYT2$distant_met_free_survival_event)
+levels(GUYT2$distant_met_free_survival_event)
+levels(GUYT2$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Variable "T" actually exists of two different variables, disease_free_survival_event; distant_met_free_survival_event.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+GUYT2$distant_met_free_survival_days <- sapply(strsplit(as.character(GUYT2$T), ","), "[", 1)
+GUYT2$disease_free_survival_days <- sapply(strsplit(as.character(GUYT2$T), ","), "[", 2)
+GUYT2$T <- NULL
+```
+
+Extract only numeric digits from values. Values before exaction:"[dmfs:1955"" and "rfs:1955]"
+After extraction 1955 and 1955.
+```{r}
+GUYT2$distant_met_free_survival_days <- as.numeric(gsub("\\D", "", GUYT2$distant_met_free_survival_days))
+GUYT2$disease_free_survival_days <- as.numeric(gsub("\\D", "", GUYT2$disease_free_survival_days))
+```
+
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(GUYT2) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "age_at_initial_pathologic_diagnosis",
+                 "ER_status",
+                 "histology_differentiation_grade",
+                 "lymph_node_status",
+                 "PR_status",
+                 "series",
+                 "tumor_size_cm",
+                 "type_treatment",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR",
+                 "distant_met_free_survival_event", 
+                 "disease_free_survival_event",
+                 "distant_met_free_survival_days", 
+                 "disease_free_survival_days")
+```
+
+Add variable pathology_T_stage.
+```{r}
+GUYT2$pathology_T_stage[is.na(GUYT2$tumor_size_cm)] <- NA
+GUYT2$pathology_T_stage[GUYT2$tumor_size_cm <= 0.1] <- "T1mi"
+GUYT2$pathology_T_stage[GUYT2$tumor_size_cm > 0.1 & GUYT2$tumor_size_cm <= 0.5] <- "T1a"
+GUYT2$pathology_T_stage[GUYT2$tumor_size_cm > 0.5 & GUYT2$tumor_size_cm <= 1] <- "T1b"
+GUYT2$pathology_T_stage[GUYT2$tumor_size_cm > 1 & GUYT2$tumor_size_cm <= 2] <- "T1c"
+GUYT2$pathology_T_stage[GUYT2$tumor_size_cm > 2 & GUYT2$tumor_size_cm <= 5] <- "T2"
+GUYT2$pathology_T_stage[GUYT2$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Adjust values for variable ER_status to "ER+".
+```{r}
+GUYT2$ER_status <- as.factor(GUYT2$ER_status)
+levels(GUYT2$ER_status)
+levels(GUYT2$ER_status) <- c("ER+")
+```
+
+Adjust values for histology_differentiation_status to "GX", "G1", "G2" etc.
+```{r}
+GUYT2$histology_differentiation_grade <- as.factor(GUYT2$histology_differentiation_grade)
+levels(GUYT2$histology_differentiation_grade)
+levels(GUYT2$histology_differentiation_grade) <- c("G1", "G2", "G3")
+```
+
+Adjust values for variable lymph_node_status to "LN+", "LN-".
+```{r}
+GUYT2$lymph_node_status <- as.factor(GUYT2$lymph_node_status)
+levels(GUYT2$lymph_node_status)
+levels(GUYT2$lymph_node_status) <- c("LN-", "LN+")
+```
+
+Adjust values for variable PR_status to "PR+", "PR-".
+```{r}
+GUYT2$PR_status <- as.factor(GUYT2$PR_status)
+levels(GUYT2$PR_status)
+levels(GUYT2$PR_status) <- c("PR-", "PR+")
+```
+
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+GUYT2$DMFS_10Y_EVENT <- as.factor(GUYT2$DMFS_10Y_EVENT)
+levels(GUYT2$DMFS_10Y_EVENT)
+levels(GUYT2$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+GUYT2[GUYT2 == ""] <- NA
+GUYT2[GUYT2 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_days", "distant_met_free_survival_event", "distant_met_free_survival_days", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+GUYT2[, setdiff(refcols, names(GUYT2))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+GUYT2 <- GUYT2[, c(refcols, setdiff(names(GUYT2), refcols))]
+```
+
+Save dataframe GUYT2 with newly assigned variable names as csv file.
+```{r}
+write.csv(GUYT2, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE9195_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+-----------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **MAINZ**
+```{r}
+names(MAINZ)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(MAINZ$Sample.ID, MAINZ$Barcode)
+MAINZ$Barcode <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(MAINZ) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "series",
+                 "distant_met_free_survival_event",
+                 "histology_differentiation_grade",
+                 "lymph_node_status",
+                 "tumor_size_cm",
+                 "sample_storage",
+                 "distant_met_free_survival_days",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR")
+```
+
+Add variable pathology_T_stage.
+```{r}
+MAINZ$pathology_T_stage[is.na(MAINZ$tumor_size_cm)] <- NA
+MAINZ$pathology_T_stage[MAINZ$tumor_size_cm <= 0.1] <- "T1mi"
+MAINZ$pathology_T_stage[MAINZ$tumor_size_cm > 0.1 & MAINZ$tumor_size_cm <= 0.5] <- "T1a"
+MAINZ$pathology_T_stage[MAINZ$tumor_size_cm > 0.5 & MAINZ$tumor_size_cm <= 1] <- "T1b"
+MAINZ$pathology_T_stage[MAINZ$tumor_size_cm > 1 & MAINZ$tumor_size_cm <= 2] <- "T1c"
+MAINZ$pathology_T_stage[MAINZ$tumor_size_cm > 2 & MAINZ$tumor_size_cm <= 5] <- "T2"
+MAINZ$pathology_T_stage[MAINZ$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Extract only numeric values for variables distant_met_free_survival_event and distant_met_free_survival_days.
+```{r}
+MAINZ$distant_met_free_survival_event <- as.numeric(gsub("\\D", "", MAINZ$distant_met_free_survival_event))
+MAINZ$distant_met_free_survival_days <- as.numeric(gsub("\\D", "", MAINZ$distant_met_free_survival_days))
+```
+
+Adjust values for variable distant_met_free_survival_event to "DistantMetastasisFree" or "DistantMetastasis"
+```{r}
+MAINZ$distant_met_free_survival_event <- as.factor(MAINZ$distant_met_free_survival_event)
+levels(MAINZ$distant_met_free_survival_event)
+levels(MAINZ$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Adjust variable values for histology_differentiation_grade
+```{r}
+MAINZ$histology_differentiation_grade <- as.factor(MAINZ$histology_differentiation_grade)
+levels(MAINZ$histology_differentiation_grade)
+levels(MAINZ$histology_differentiation_grade) <- c("G1", "G2", "G3")
+```
+
+Adjust values for variable lymph_node_status
+```{r}
+MAINZ$lymph_node_status <- as.factor(MAINZ$lymph_node_status)
+levels(MAINZ$lymph_node_status)
+levels(MAINZ$lymph_node_status) <- c("LN-")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+MAINZ$DMFS_10Y_EVENT <- as.factor(MAINZ$DMFS_10Y_EVENT)
+levels(MAINZ$DMFS_10Y_EVENT)
+levels(MAINZ$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+MAINZ[MAINZ == ""] <- NA
+MAINZ[MAINZ == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival", "distant_met_free_survival_event", "distant_met_free_survival_days", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+MAINZ[, setdiff(refcols, names(MAINZ))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+MAINZ <- MAINZ[, c(refcols, setdiff(names(MAINZ), refcols))]
+```
+
+Save dataframe MAINZ with newly assigned variable names as csv file.
+```{r}
+write.csv(MAINZ, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE11121_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **STO** (Platform GPL96)
+```{r}
+names(STO)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(STO$Sample.ID, STO$Barcode)
+STO$Barcode <- NULL
+```
+
+Variable "Breast.tumor.tissue" has value "NA" for all samples. Drop column.
+```{r} 
+STO$Breast.tumor.tissue
+STO$Breast.tumor.tissue <- NULL
+```
+
+Variable "See.Series.GSE1456.record.for.additional.information" is NA for all samples. Drop column.
+```{r} 
+STO$See.Series.GSE1456.record.for.additional.information
+STO$See.Series.GSE1456.record.for.additional.information <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(STO) <- c("sample.ID",
+                "array_sample_id",
+                "sample_title",
+                "vital_status",
+                "breast_cancer_cause_of_death",
+                "histology_differentiation_grade",
+                "disease_free_survival_event",
+                "molecular_subtype",
+                "survival_time_years",
+                "disease_free_survival_years",
+                "IMS",
+                "DMFS_10Y_TIME",
+                "DMFS_10Y_EVENT",
+                "IBS",
+                "IDS",
+                "ICR")
+```
+
+Replace data in the field histology_differentation_grade to "NA", "GX", G1", "G2", "G3", "G4"
+```{r}
+STO$histology_differentiation_grade[is.na(STO$histology_differentiation_grade)] <- NA
+STO$histology_differentiation_grade[STO$histology_differentiation_grade == 1] <- "G1"
+STO$histology_differentiation_grade[STO$histology_differentiation_grade == 2] <- "G2"
+STO$histology_differentiation_grade[STO$histology_differentiation_grade == 3] <- "G3"
+STO$histology_differentiation_grade[STO$histology_differentiation_grade == 4] <- "G4"
+```
+
+Adjust values for variable vital_status to "dead" or "alive".
+```{r}
+STO$vital_status <- as.factor(STO$vital_status)
+levels(STO$vital_status)
+levels(STO$vital_status) <- c("alive", "dead")
+```
+
+Adjust values for variable disease_free_survival_event to "DiseaseFree" and "Recurred/Progressed".
+```{r}
+STO$disease_free_survival_event <- as.factor(STO$disease_free_survival_event)
+levels(STO$disease_free_survival_event)
+levels(STO$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+STO$DMFS_10Y_EVENT <- as.factor(STO$DMFS_10Y_EVENT)
+levels(STO$DMFS_10Y_EVENT)
+levels(STO$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+STO[STO == ""] <- NA
+STO[STO == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+STO[, setdiff(refcols, names(STO))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+STO <- STO[, c(refcols, setdiff(names(STO), refcols))]
+```
+
+Save standardized dataframe STO with newly assigned variable names as csv file.
+```{r}
+write.csv(STO, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE1456.GPL96_appended.meta.data_v1.csv", row.names = FALSE)
+```
+----------------------------------------------------------------------------------------
+
+View original variable names in dataset **STO2** (same cohort, only different platform (GPL97))
+
+```{r}
+names(STO2)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(STO2$Sample.ID, STO2$Barcode)
+STO2$Barcode <- NULL
+```
+
+Variable "Breast.tumor.tissue" has value "NA" for all samples. Drop column.
+```{r} 
+STO2$Breast.tumor.tissue
+STO2$Breast.tumor.tissue <- NULL
+```
+
+Variable "See.Series.GSE1456.record.for.additional.information" is NA for all samples. Drop column.
+```{r} 
+STO2$See.Series.GSE1456.record.for.additional.information
+STO2$See.Series.GSE1456.record.for.additional.information <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(STO2) <- c("sample.ID",
+                "array_sample_id",
+                "sample_title",
+                "vital_status",
+                "breast_cancer_cause_of_death",
+                "histology_differentiation_grade",
+                "disease_free_survival_event",
+                "molecular_subtype",
+                "survival_time_years",
+                "disease_free_survival_years",
+                "IMS",
+                "DMFS_10Y_TIME",
+                "DMFS_10Y_EVENT",
+                "IBS",
+                "IDS",
+                "ICR")
+```
+
+Replace data in the field histology_differention_grade to "NA", "GX", G1", "G2", "G3", "G4"
+
+```{r}
+STO2$histology_differentiation_grade[is.na(STO2$histology_differentiation_grade)] <- NA
+STO2$histology_differentiation_grade[STO2$histology_differentiation_grade == 1] <- "G1"
+STO2$histology_differentiation_grade[STO2$histology_differentiation_grade == 2] <- "G2"
+STO2$histology_differentiation_grade[STO2$histology_differentiation_grade == 3] <- "G3"
+STO2$histology_differentiation_grade[STO2$histology_differentiation_grade == 4] <- "G4"
+```
+
+Adjust values for variable vital_status to "dead" or "alive".
+```{r}
+STO2$vital_status <- as.factor(STO2$vital_status)
+levels(STO2$vital_status)
+levels(STO2$vital_status) <- c("alive", "dead")
+```
+
+Adjust values for variable disease_free_survival_event to "DiseaseFree" and "Recurred/Progressed".
+```{r}
+STO2$disease_free_survival_event <- as.factor(STO2$disease_free_survival_event)
+levels(STO2$disease_free_survival_event)
+levels(STO2$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+STO2$DMFS_10Y_EVENT <- as.factor(STO2$DMFS_10Y_EVENT)
+levels(STO2$DMFS_10Y_EVENT)
+levels(STO2$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+STO2[STO2 == ""] <- NA
+STO2[STO2 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+STO2[, setdiff(refcols, names(STO2))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+STO2 <- STO2[, c(refcols, setdiff(names(STO2), refcols))]
+```
+
+Save standardized dataframe STO2 with newly assigned variable names as csv file.
+```{r}
+write.csv(STO2, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE1456.GPL97_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+---------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **MSKCC**
+```{r}
+names(MSKCC)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(MSKCC$Sample.ID, MSKCC$Barcode)
+MSKCC$Barcode <- NULL
+```
+
+Variable "Name" only contains values for clinical samples. Fields for this variable are empty for the first 22 rows (cell line samples).
+The fields that are filled are row 23-121 and seem identical to the sample titles. This is checked by the following code.
+```{r}
+identical(as.character(MSKCC[23:121,]$X.Sample.Title), as.character(MSKCC[23:121,]$Name))
+```
+
+This means this variable is redundant. Drop column.
+
+```{r}
+MSKCC$Name <- NULL
+```
+
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(MSKCC) <- c("sample.ID",
+                  "array_sample_id",
+                  "sample_title",
+                  "age_at_initial_pathologic_diagnosis",
+                  "lymph_node_examined_count",
+                  "RFS_5Y_EVENT",
+                  "bone_metastasis_event",
+                  "bone_metastasis_free_survival_years",
+                  "HER2_IHC",
+                  "lung_metastasis_event",
+                  "lung_metastasis_free_survival_years",
+                  "disease_free_survival_event",
+                  "disease_free_survival_years",
+                  "ER_status",
+                  "PR_status",
+                  "number_of_lymph_nodes_positive",
+                  "tissue_type",
+                  "tumor_size_cm",
+                  "van_t_veer_signature",
+                  "IMS",
+                  "DMFS_10Y_TIME",
+                  "DMFS_10Y_EVENT",
+                  "IBS",
+                  "IDS",
+                  "ICR")
+```
+
+Add variable pathology_T_stage.
+```{r}
+MSKCC$pathology_T_stage[is.na(MSKCC$tumor_size_cm)] <- NA
+MSKCC$pathology_T_stage[MSKCC$tumor_size_cm <= 0.1] <- "T1mi"
+MSKCC$pathology_T_stage[MSKCC$tumor_size_cm > 0.1 & MSKCC$tumor_size_cm <= 0.5] <- "T1a"
+MSKCC$pathology_T_stage[MSKCC$tumor_size_cm > 0.5 & MSKCC$tumor_size_cm <= 1] <- "T1b"
+MSKCC$pathology_T_stage[MSKCC$tumor_size_cm > 1 & MSKCC$tumor_size_cm <= 2] <- "T1c"
+MSKCC$pathology_T_stage[MSKCC$tumor_size_cm > 2 & MSKCC$tumor_size_cm <= 5] <- "T2"
+MSKCC$pathology_T_stage[MSKCC$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Replace data in the fields ER_status to "ER+", "ER-" or NA
+```{r}
+levels(MSKCC$ER_status) 
+levels(MSKCC$ER_status) <- c(NA, "ER-", "ER+")
+```
+
+Replace data in the fields PR_status to "PR+", "PR-" or NA
+```{r}
+levels(MSKCC$PR_status) 
+levels(MSKCC$PR_status) <- c(NA, NA, "PR-", "PR+")
+```
+
+Replace data in the fields HER2_IHC to NA, NA, "N", "0-1", "1+", "2+", "3+"
+```{r}
+levels(MSKCC$HER2_IHC) 
+levels(MSKCC$HER2_IHC) <- c(NA, NA, "0-1", "1+", "1+ (only 1 core pos.)", "2+", "3+", "N")
+```
+
+For variable bone_metastasis_event change values to "BoneMetastasisFree" and "BoneMetastasis"
+```{r}
+MSKCC$bone_metastasis_event <- as.factor(MSKCC$bone_metastasis_event)
+levels(MSKCC$bone_metastasis_event)
+levels(MSKCC$bone_metastasis_event) <- c(NA, NA, "BoneMetastasisFree", "BoneMetastasis")
+```
+
+For variable lung_metastasis_event change values to "LungMetastasisFree" and "LungMetastasis"
+```{r}
+MSKCC$lung_metastasis_event <- as.factor(MSKCC$lung_metastasis_event)
+levels(MSKCC$lung_metastasis_event)
+levels(MSKCC$lung_metastasis_event) <- c(NA, NA, "LungMetastasisFree", "LungMetastasis")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+MSKCC$disease_free_survival_event <- as.factor(MSKCC$disease_free_survival_event)
+levels(MSKCC$disease_free_survival_event)
+levels(MSKCC$disease_free_survival_event) <- c(NA, NA, "DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+MSKCC$DMFS_10Y_EVENT <- as.factor(MSKCC$DMFS_10Y_EVENT)
+levels(MSKCC$DMFS_10Y_EVENT)
+levels(MSKCC$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Replace all variable values "--" by NA's and change all empty fields to NA's.
+```{r}
+MSKCC[MSKCC == "--"] <- NA
+```
+
+Split dataframe into 2 dataframes based on origin of tissue sample (indicated by variable tissue_type). All clinical variables have values " " for tissue_type. All cell lines have a descriptive name for this variable.
+```{r}
+levels(MSKCC$tissue_type)
+MSKCC_Clinical_Samples <- MSKCC[which(MSKCC$tissue_type == " "),]
+MSKCC_Cell_Lines <- MSKCC[which(!MSKCC$tissue_type == " "),]
+```
+
+In dataset containing only clinical samples, the variable tissue_type only contains values " ". Therefore this variable can be dropped.
+```{r}
+MSKCC_Clinical_Samples$tissue_type <- NULL
+```
+
+In dataset containing only Cell_lines, most of the variables are not applicable and have value NA. Drop these variables in this dataset.
+```{r}
+MSKCC_Cell_Lines$age_at_initial_pathologic_diagnosis <- NULL
+MSKCC_Cell_Lines$lymph_node_examined_count <- NULL
+MSKCC_Cell_Lines$RFS_5Y_EVENT <- NULL
+MSKCC_Cell_Lines$bone_metastasis_event <- NULL
+MSKCC_Cell_Lines$bone_metastasis_free_survival_years <- NULL
+MSKCC_Cell_Lines$HER2_IHC <- NULL
+MSKCC_Cell_Lines$lung_metastasis_event <- NULL
+MSKCC_Cell_Lines$lung_metastasis_free_survival_years <- NULL
+MSKCC_Cell_Lines$disease_free_survival_event <- NULL
+MSKCC_Cell_Lines$disease_free_survival_years <- NULL
+MSKCC_Cell_Lines$ER_status <- NULL
+MSKCC_Cell_Lines$PR_status <- NULL
+MSKCC_Cell_Lines$number_of_lymph_nodes_positive <- NULL
+MSKCC_Cell_Lines$tumor_size_cm <- NULL
+MSKCC_Cell_Lines$van_t_veer_signature <- NULL
+MSKCC_Cell_Lines$IMS <- NULL
+MSKCC_Cell_Lines$DMFS_10Y_TIME <- NULL
+MSKCC_Cell_Lines$DMFS_10Y_EVENT <- NULL
+MSKCC_Cell_Lines$IBS <- NULL
+MSKCC_Cell_Lines$IDS <- NULL
+MSKCC_Cell_Lines$ICR <- NULL
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+MSKCC_Clinical_Samples[, setdiff(refcols, names(MSKCC_Clinical_Samples))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+MSKCC_Clinical_Samples <- MSKCC_Clinical_Samples[, c(refcols, setdiff(names(MSKCC_Clinical_Samples), refcols))]
+```
+
+Replace all empty fields to NA's.
+```{r}
+MSKCC_Clinical_Samples[MSKCC_Clinical_Samples == ""] <- NA
+MSKCC_Clinical_Samples[MSKCC_Clinical_Samples == " "] <- NA
+```
+
+Save dataframe MSKCC_Clinical_Samples (including both clinical samples only) with newly assigned variable names as csv file.
+```{r}
+write.csv(MSKCC_Clinical_Samples, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE2603_appended.meta.data_Clinical_Samples_v1.csv", row.names = FALSE)
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+MSKCC_Cell_Lines[, setdiff(refcols, names(MSKCC_Cell_Lines))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+MSKCC_Cell_Lines <- MSKCC_Cell_Lines[, c(refcols, setdiff(names(MSKCC_Cell_Lines), refcols))]
+```
+
+Replace all empty fields to NA's.
+```{r}
+MSKCC_Cell_Lines[MSKCC_Cell_Lines == ""] <- NA
+MSKCC_Cell_Lines[MSKCC_Cell_Lines == " "] <- NA
+```
+
+Save dataframe MSKCC_Cell_Lines (including cell lines only) with newly assigned variable names as csv file.
+```{r}
+write.csv(MSKCC_Cell_Lines, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE2603_appended.meta.data_Cell_Lines_v1.csv", row.names = FALSE)
+```
+
+Save total dataframe MSKCC (including both clinical samples and cell lines) with newly assigned variable names as csv file.
+```{r}
+write.csv(MSKCC, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE2603_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **YAU1**
+```{r}
+names(YAU1)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(YAU1$Sample.ID, YAU1$Barcode)
+YAU1$Barcode <- NULL
+```
+
+```{r}
+YAU1$PR_status  <- with(YAU1, paste(Progesterone.receptor..PR.., Progesterone.receptor..PR...1, sep = "-"))
+YAU1$`Progesterone.receptor..PR..` <- NULL
+YAU1$Progesterone.receptor..PR...1 <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(YAU1) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "age_at_initial_pathologic_diagnosis",
+                 "ER_status",
+                 "lymph_node_status",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR",
+                 "PR_status")
+```
+
+Adjust values for variable ER_status to "ER+"
+```{r}
+YAU1$ER_status <- as.factor(YAU1$ER_status)
+levels(YAU1$ER_status)
+levels(YAU1$ER_status) <- c("ER+")
+```
+
+Adjust values for variable PR_status to "PR+"
+```{r}
+YAU1$PR_status <- as.factor(YAU1$PR_status)
+levels(YAU1$PR_status)
+levels(YAU1$PR_status) <- c("PR-", "PR+")
+```
+
+Adjust values for variable lymph_node_status to "LN+", "LN-" and "Unknown"
+```{r}
+levels(YAU1$lymph_node_status)
+levels(YAU1$lymph_node_status) <- c("Unknown", "LN+", "LN-")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+YAU1$DMFS_10Y_EVENT <- as.factor(YAU1$DMFS_10Y_EVENT)
+levels(YAU1$DMFS_10Y_EVENT)
+levels(YAU1$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+YAU1[YAU1 == ""] <- NA
+YAU1[YAU1 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+YAU1[, setdiff(refcols, names(YAU1))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+YAU1 <- YAU1[, c(refcols, setdiff(names(YAU1), refcols))]
+```
+
+Save dataframe YAU1 with newly assigned variable names as csv file.
+```{r}
+write.csv(YAU1, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE8193_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+---------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **PMC** (Platform GPL96)
+```{r}
+names(PMC)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(PMC$Sample.ID, PMC$Barcode)
+PMC$Barcode <- NULL
+```
+
+Variable "Samplename"" is redundant to variable "X.Sample.Title" (by visual inspection).
+Example (see below).
+
+```{r}
+PMC[1:5,]$X.Sample.Title
+PMC[1:5,]$Samplename
+PMC[195:200,]$X.Sample.Title
+PMC[195:200,]$Samplename
+```
+
+Drop Samplename variable.
+```{r}
+PMC$Samplename <- NULL
+```
+
+The field variable ID is empty for the first 190 samples.
+From row number 190 on, IDs are displayed. Compare with X.Sample.Title variable.
+```{r}
+PMC[190:328,]$ID
+PMC[190:328,]$X.Sample.Title
+```
+
+Therefore the variable ID is a subset of X.Sample.Title, this variable is redundant, delete column.
+```{r}
+PMC$ID <- NULL
+```
+
+Variable "E" actually exists of two different variables, distant_met_free_survival_event and disease_free_survival_event.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+PMC$distant_met_free_survival_event2 <- sapply(strsplit(as.character(PMC$E), ","), "[", 1)
+PMC$disease_free_survival_event <- sapply(strsplit(as.character(PMC$E), ","), "[", 2)
+PMC$E <- NULL
+```
+
+Change values of distant_met_free_survival_event.
+```{r}
+PMC$distant_met_free_survival_event2 <- as.factor(PMC$distant_met_free_survival_event2)
+levels(PMC$distant_met_free_survival_event2)
+levels(PMC$distant_met_free_survival_event2) <- c(NA, "0", "1", NA)
+```
+
+Change values of disease_free_survival_event.
+```{r}
+PMC$disease_free_survival_event <- as.factor(PMC$disease_free_survival_event)
+levels(PMC$disease_free_survival_event)
+levels(PMC$disease_free_survival_event) <- c("0", "1", NA)
+```
+
+Variable "T" actually exists of two different variables, "distant_met_free_survival and disease_free_survival.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+PMC$distant_met_free_survival_days2 <- sapply(strsplit(as.character(PMC$T), ","), "[", 1)
+PMC$disease_free_survival <- sapply(strsplit(as.character(PMC$T), ","), "[", 2)
+PMC$T <- NULL
+```
+
+Extract only numeric digits from values. Values before exaction:"[dmfs:1955"" and "rfs:1955]"
+After extraction 1955 and 1955.
+```{r}
+PMC$distant_met_free_survival_days2 <- as.numeric(gsub("\\D", "", PMC$distant_met_free_survival_days2))
+PMC$disease_free_survival <- as.numeric(gsub("\\D", "", PMC$disease_free_survival))
+```
+
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(PMC) <- c("sample.ID",
+                "array_sample_id",
+                "sample_title",
+                "age_at_initial_pathologic_diagnosis",
+                "distant_met_free_survival_event1",
+                "ER_status",
+                "GGI_indicator",
+                "histology_differentiation_grade",
+                "lymph_node_status",
+                "PR_status",
+                "series",
+                "tumor_size_cm",
+                "distant_met_free_survival_days1",
+                "IMS",
+                "DMFS_10Y_TIME",
+                "DMFS_10Y_EVENT",
+                "IBS",
+                "IDS",
+                "ICR",
+                "distant_met_free_survival_event2",
+                "disease_free_survival_event",
+                "distant_met_free_survival_days2",
+                "disease_free_survival_days")
+```
+
+Add variable pathology_T_stage.
+```{r}
+PMC$pathology_T_stage[is.na(PMC$tumor_size_cm)] <- NA
+PMC$pathology_T_stage[PMC$tumor_size_cm <= 0.1] <- "T1mi"
+PMC$pathology_T_stage[PMC$tumor_size_cm > 0.1 & PMC$tumor_size_cm <= 0.5] <- "T1a"
+PMC$pathology_T_stage[PMC$tumor_size_cm > 0.5 & PMC$tumor_size_cm <= 1] <- "T1b"
+PMC$pathology_T_stage[PMC$tumor_size_cm > 1 & PMC$tumor_size_cm <= 2] <- "T1c"
+PMC$pathology_T_stage[PMC$tumor_size_cm > 2 & PMC$tumor_size_cm <= 5] <- "T2"
+PMC$pathology_T_stage[PMC$tumor_size_cm > 5] <- "T3/T4"
+```
+
+The variable age_at_initial_pathologic_diagnosis includes multiple values with letters, for example: "KJ67", "KJ68", "KJ69".
+The meaning of "KJ" in these values is unclear. To make the data tidy, we extract only the numeric digits from these values.
+Resulting in 67, 68 and 69.
+
+```{r}
+PMC$age_at_initial_pathologic_diagnosis <- as.numeric(gsub("\\D", "", PMC$age_at_initial_pathologic_diagnosis))
+```
+
+The variable distant_met_free_survival_days1 includes multiple values with letters.
+To make the data tidy, we extract only the numeric digits from these values.
+```{r}
+PMC$distant_met_free_survival_days1 <- as.numeric(gsub("\\D", "", PMC$distant_met_free_survival_days1))
+```
+
+Change variable values for ER_status to "ER+", "ER-", NA.
+```{r}
+levels(PMC$ER_status)
+levels(PMC$ER_status) <- c(NA, NA, "ER-", "ER+")
+```
+
+Replace data in the field histology_differention_grade to NA, "GX", G1", "G2", "G3", "G4"
+```{r}
+levels(PMC$histology_differentiation_grade)
+levels(PMC$histology_differentiation_grade) <- c("GX", "G1", "G2", "G3")
+```
+
+Change variable values for lymph_node_status to "LN+", "LN-".
+```{r}
+PMC$lymph_node_status <- as.factor(PMC$lymph_node_status)
+levels(PMC$lymph_node_status)
+levels(PMC$lymph_node_status) <- c("LN-", "LN+")
+```
+
+Change variable values for PR_status  to "PR+", "PR-".
+```{r}
+PMC$PR_status <- as.factor(PMC$PR_status)
+levels(PMC$PR_status)
+levels(PMC$PR_status) <- c("PR-", "PR+")
+```
+
+The dataframe now consists of 2 times 2 identical columns: disease_free_survival and distant_met_free_survival_event (Which is strange, since they are not coupled, could renaming of variables be wrong ???)
+```{r}
+names(PMC)
+```
+
+Add another column distant_met_free_survival_days. Start with distant_met_free_survival_days1 and then add the value of distant_met_free_survival_days2 in this same column when the value is not NA. Drop initial columns.
+```{r}
+PMC$distant_met_free_survival_days <- PMC$distant_met_free_survival_days1
+PMC$distant_met_free_survival_days[!is.na(PMC$distant_met_free_survival_days2)] <- PMC$distant_met_free_survival_days2[!is.na(PMC$distant_met_free_survival_days2)]
+PMC$distant_met_free_survival_days1 <- NULL
+PMC$distant_met_free_survival_days2 <- NULL
+```
+
+Add another column distant_met_free_survival_event. Start with distant_met_free_survival_event1 and then add the value of distant_met_free_survival_event2 in this same column when the value is not NA. Drop initial columns.
+```{r}
+PMC$distant_met_free_survival_event1 <- as.factor(PMC$distant_met_free_survival_event1)
+levels(PMC$distant_met_free_survival_event1)
+
+PMC$distant_met_free_survival_event2 <- as.factor(PMC$distant_met_free_survival_event2)
+levels(PMC$distant_met_free_survival_event2)
+
+PMC$distant_met_free_survival_event <- PMC$distant_met_free_survival_event1
+PMC$distant_met_free_survival_event[!is.na(PMC$distant_met_free_survival_event2)] <- PMC$distant_met_free_survival_event2[!is.na(PMC$distant_met_free_survival_event2)]
+
+PMC$distant_met_free_survival_event1 <- NULL
+PMC$distant_met_free_survival_event2 <- NULL
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+PMC$disease_free_survival_event <- as.factor(PMC$disease_free_survival_event)
+levels(PMC$disease_free_survival_event)
+levels(PMC$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed", NA)
+```
+
+For variable distant_met_free_survival_event, change values to "DistantMetastasisFree" and "DistantMetastasis"
+```{r}
+PMC$distant_met_free_survival_event <- as.factor(PMC$distant_met_free_survival_event)
+levels(PMC$distant_met_free_survival_event)
+levels(PMC$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+PMC$DMFS_10Y_EVENT <- as.factor(PMC$DMFS_10Y_EVENT)
+levels(PMC$DMFS_10Y_EVENT)
+levels(PMC$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+PMC[PMC == ""] <- NA
+PMC[PMC == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_days", "distant_met_free_survival_event", "distant_met_free_survival_days", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+PMC[, setdiff(refcols, names(PMC))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+PMC <- PMC[, c(refcols, setdiff(names(PMC), refcols))]
+```
+
+```{r}
+PMC[PMC == ""] <- NA
+PMC[PMC == " "] <- NA
+```
+
+Save dataframe PMC with newly assigned variable names as csv file.
+```{r}
+write.csv(PMC, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE6532.GPL96_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **PMC2** (Platform GPL97)
+```{r}
+names(PMC2)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(PMC2$Sample.ID, PMC2$Barcode)
+PMC2$Barcode <- NULL
+```
+
+Variable ID is a subset of X.Sample.Title, this variable is redundant, delete column.
+```{r}
+PMC2$ID <- NULL
+```
+
+Variable "E" actually exists of two different variables, distant_met_free_survival_event and disease_free_survival_event.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+PMC2$distant_met_free_survival_event <- sapply(strsplit(as.character(PMC2$E), ","), "[", 1)
+PMC2$disease_free_survival_event <- sapply(strsplit(as.character(PMC2$E), ","), "[", 2)
+PMC2$E <- NULL
+```
+
+Change values of distant_met_free_survival_event.
+```{r}
+PMC2$distant_met_free_survival_event <- as.factor(PMC2$distant_met_free_survival_event)
+levels(PMC2$distant_met_free_survival_event)
+levels(PMC2$distant_met_free_survival_event) <- c("0", "1", NA)
+```
+
+Change values of disease_free_survival_event.
+```{r}
+PMC2$disease_free_survival_event <- as.factor(PMC2$disease_free_survival_event)
+levels(PMC2$disease_free_survival_event)
+levels(PMC2$disease_free_survival_event) <- c("0", "1", NA)
+```
+
+Variable "T" actually exists of two different variables, "distant_met_free_survival and disease_free_survival.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+PMC2$distant_met_free_survival <- sapply(strsplit(as.character(PMC2$T), ","), "[", 1)
+PMC2$disease_free_survival <- sapply(strsplit(as.character(PMC2$T), ","), "[", 2)
+PMC2$T <- NULL
+```
+
+Extract only numeric digits from values. Values before exaction:"[dmfs:1955"" and "rfs:1955]"
+After extraction 1955 and 1955.
+```{r}
+PMC2$distant_met_free_survival <- as.numeric(gsub("\\D", "", PMC2$distant_met_free_survival))
+PMC2$disease_free_survival <- as.numeric(gsub("\\D", "", PMC2$disease_free_survival))
+```
+
+Variable Samplename is redundant, delete variable.
+```{r}
+PMC2$Samplename <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(PMC2) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "age_at_initial_pathologic_diagnosis",
+                 "ER_status",
+                 "histology_differentiation_grade",
+                 "lymph_node_status",
+                 "PR_status",
+                 "series",
+                 "tumor_size_cm",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR",
+                 "distant_met_free_survival_event",
+                 "disease_free_survival_event",
+                 "distant_met_free_survival_days",
+                 "disease_free_survival_days")
+```
+
+Add variable pathology_T_stage.
+```{r}
+PMC2$pathology_T_stage[is.na(PMC2$tumor_size_cm)] <- NA
+PMC2$pathology_T_stage[PMC2$tumor_size_cm <= 0.1] <- "T1mi"
+PMC2$pathology_T_stage[PMC2$tumor_size_cm > 0.1 & PMC2$tumor_size_cm <= 0.5] <- "T1a"
+PMC2$pathology_T_stage[PMC2$tumor_size_cm > 0.5 & PMC2$tumor_size_cm <= 1] <- "T1b"
+PMC2$pathology_T_stage[PMC2$tumor_size_cm > 1 & PMC2$tumor_size_cm <= 2] <- "T1c"
+PMC2$pathology_T_stage[PMC2$tumor_size_cm > 2 & PMC2$tumor_size_cm <= 5] <- "T2"
+PMC2$pathology_T_stage[PMC2$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Change variable values for ER_status to "ER+", "ER-".
+```{r}
+PMC2$ER_status <- as.factor(PMC2$ER_status)
+levels(PMC2$ER_status)
+levels(PMC2$ER_status) <- c("ER-", "ER+")
+```
+
+Replace data in the field histology_differentiation_grade to "NA", "GX", G1", "G2", "G3", "G4"
+```{r}
+PMC2$histology_differentiation_grade <- as.factor(PMC2$histology_differentiation_grade)
+levels(PMC2$histology_differentiation_grade)
+levels(PMC2$histology_differentiation_grade) <- c("G1", "G2", "G3")
+```
+
+Change variable values for lymph_node_status to "LN+", "LN-", "NA".
+```{r}
+PMC2$lymph_node_status <- as.factor(PMC2$lymph_node_status)
+levels(PMC2$lymph_node_status)
+levels(PMC2$lymph_node_status) <- c("LN-", "LN+")
+```
+
+Change variable values for PR_status  to "PR+", "PR-", "NA".
+```{r}
+PMC2$PR_status <- as.factor(PMC2$PR_status)
+levels(PMC2$PR_status)
+levels(PMC2$PR_status) <- c("PR-", "PR+")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+PMC2$disease_free_survival_event <- as.factor(PMC2$disease_free_survival_event)
+levels(PMC2$disease_free_survival_event)
+levels(PMC2$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed", NA)
+```
+
+For variable distant_met_free_survival_event, change values to "DistantMetastasisFree" and "DistantMetastasis"
+```{r}
+PMC2$distant_met_free_survival_event <- as.factor(PMC2$distant_met_free_survival_event)
+levels(PMC2$distant_met_free_survival_event)
+levels(PMC2$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis", NA)
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+PMC2$DMFS_10Y_EVENT <- as.factor(PMC2$DMFS_10Y_EVENT)
+levels(PMC2$DMFS_10Y_EVENT)
+levels(PMC2$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+PMC2[PMC2 == ""] <- NA
+PMC2[PMC2 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_days", "distant_met_free_survival_event", "distant_met_free_survival_days", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+PMC2[, setdiff(refcols, names(PMC2))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+PMC2 <- PMC2[, c(refcols, setdiff(names(PMC2), refcols))]
+```
+
+Save dataframe PMC2 with newly assigned variable names as csv file.
+```{r}
+write.csv(PMC2, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE6532.GPL97_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **PMC3** (Platform GPL570)
+```{r}
+names(PMC3)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(PMC3$Sample.ID, PMC3$Barcode)
+PMC3$Barcode <- NULL
+```
+
+Variable "E" actually exists of two different variables, distant_met_free_survival_event and disease_free_survival_event.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+PMC3$distant_met_free_survival_event <- sapply(strsplit(as.character(PMC3$E), ","), "[", 1)
+PMC3$disease_free_survival_event <- sapply(strsplit(as.character(PMC3$E), ","), "[", 2)
+PMC3$E <- NULL
+```
+
+Change values of distant_met_free_survival_event.
+```{r}
+PMC3$distant_met_free_survival_event <- as.factor(PMC3$distant_met_free_survival_event)
+levels(PMC3$distant_met_free_survival_event)
+levels(PMC3$distant_met_free_survival_event) <- c("0", "1")
+```
+
+Change values of disease_free_survival_event.
+```{r}
+PMC3$disease_free_survival_event <- as.factor(PMC3$disease_free_survival_event)
+levels(PMC3$disease_free_survival_event)
+levels(PMC3$disease_free_survival_event) <- c("0", "1")
+```
+
+Variable "T" actually exists of two different variables, "distant_met_free_survival and disease_free_survival.
+First split this variable into two different columns and delete the original column.
+
+```{r}
+PMC3$distant_met_free_survival <- sapply(strsplit(as.character(PMC3$T), ","), "[", 1)
+PMC3$disease_free_survival <- sapply(strsplit(as.character(PMC3$T), ","), "[", 2)
+PMC3$T <- NULL
+```
+
+Extract only numeric digits from values. Values before exaction:"[dmfs:1955"" and "rfs:1955]"
+After extraction 1955 and 1955.
+```{r}
+PMC3$distant_met_free_survival <- as.numeric(gsub("\\D", "", PMC3$distant_met_free_survival))
+PMC3$disease_free_survival <- as.numeric(gsub("\\D", "", PMC3$disease_free_survival))
+```
+
+Variable ID is redundant, delete variable.
+```{r}
+PMC3$ID <- NULL
+```
+
+Variable Samplename is redundant, delete variable.
+```{r}
+PMC3$Samplename <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(PMC3) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "age_at_initial_pathologic_diagnosis",
+                 "ER_status",
+                 "histology_differentiation_grade",
+                 "lymph_node_status",
+                 "PR_status",
+                 "series",
+                 "tumor_size_cm",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR",
+                 "distant_met_free_survival_event",
+                 "disease_free_survival_event",
+                 "distant_met_free_survival_days",
+                 "disease_free_survival_days")
+```
+
+Add variable pathology_T_stage.
+```{r}
+PMC3$pathology_T_stage[is.na(PMC3$tumor_size_cm)] <- NA
+PMC3$pathology_T_stage[PMC3$tumor_size_cm <= 0.1] <- "T1mi"
+PMC3$pathology_T_stage[PMC3$tumor_size_cm > 0.1 & PMC3$tumor_size_cm <= 0.5] <- "T1a"
+PMC3$pathology_T_stage[PMC3$tumor_size_cm > 0.5 & PMC3$tumor_size_cm <= 1] <- "T1b"
+PMC3$pathology_T_stage[PMC3$tumor_size_cm > 1 & PMC3$tumor_size_cm <= 2] <- "T1c"
+PMC3$pathology_T_stage[PMC3$tumor_size_cm > 2 & PMC3$tumor_size_cm <= 5] <- "T2"
+PMC3$pathology_T_stage[PMC3$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Change variable values for ER_status to "ER+", "ER-", "NA".
+```{r}
+PMC3$ER_status <- as.factor(PMC3$ER_status)
+levels(PMC3$ER_status)
+levels(PMC3$ER_status) <- c("ER+")
+```
+
+Replace data in the field histology_differentiation_grade to "NA", "GX", G1", "G2", "G3", "G4"
+```{r}
+PMC3$histology_differentiation_grade <- as.factor(PMC3$histology_differentiation_grade)
+levels(PMC3$histology_differentiation_grade)
+levels(PMC3$histology_differentiation_grade) <- c("G1", "G2", "G3")
+```
+
+Change variable values for lymph_node_status to "LN+", "LN-", "NA".
+```{r}
+PMC3$lymph_node_status <- as.factor(PMC3$lymph_node_status)
+levels(PMC3$lymph_node_status)
+levels(PMC3$lymph_node_status) <- c("LN-", "LN+")
+```
+
+Change variable values for PR_status  to "PR+", "PR-", "NA".
+```{r}
+PMC3$PR_status <- as.factor(PMC3$PR_status)
+levels(PMC3$PR_status)
+levels(PMC3$PR_status) <- c("PR-", "PR+")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+PMC3$disease_free_survival_event <- as.factor(PMC3$disease_free_survival_event)
+levels(PMC3$disease_free_survival_event)
+levels(PMC3$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed", NA)
+```
+
+For variable distant_met_free_survival_event, change values to "DistantMetastasisFree" and "DistantMetastasis"
+```{r}
+PMC3$distant_met_free_survival_event <- as.factor(PMC3$distant_met_free_survival_event)
+levels(PMC3$distant_met_free_survival_event)
+levels(PMC3$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis", NA)
+```
+
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+PMC3$DMFS_10Y_EVENT <- as.factor(PMC3$DMFS_10Y_EVENT)
+levels(PMC3$DMFS_10Y_EVENT)
+levels(PMC3$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+PMC3[PMC3 == ""] <- NA
+PMC3[PMC3 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_days", "distant_met_free_survival_event", "distant_met_free_survival_days", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+PMC3[, setdiff(refcols, names(PMC3))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+PMC3 <- PMC3[, c(refcols, setdiff(names(PMC3), refcols))]
+```
+
+Save dataframe PMC3 with newly assigned variable names as csv file.
+```{r}
+write.csv(PMC3, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE6532.GPL570_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **TBIG**
+```{r}
+names(TBIG)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(TBIG$Sample.ID, TBIG$Barcode)
+TBIG$Barcode <- NULL
+```
+
+Variable "Samplename" seem to be identical to variable "X.Sample.Title"
+Check this and drop "samplename" variable.
+
+```{r}
+identical(TBIG$X.Sample.Title, TBIG$Samplename)
+TBIG$Samplename <- NULL
+```
+
+Variable "ID" is a subset of variable "X.Sample.Title" and is therefore redundant. Delete variable.
+```{r}
+TBIG$ID <- NULL
+```
+
+Variable "E" actually exists of 4 different variables, distant_met_free_survival_event; vital_status; disease_free_survival_event; time_to_distant_metastasis.
+First split this variable into 4 different columns and delete the original column.
+
+```{r}
+TBIG$distant_met_free_survival_event <- sapply(strsplit(as.character(TBIG$E), ","), "[", 1)
+TBIG$vital_status <- sapply(strsplit(as.character(TBIG$E), ","), "[", 2)
+TBIG$disease_free_survival_event <- sapply(strsplit(as.character(TBIG$E), ","), "[", 3)
+TBIG$distant_metastasis_event <- sapply(strsplit(as.character(TBIG$E), ","), "[", 4)
+TBIG$E <- NULL
+```
+
+Variable "T" actually exists of 4 different variables, distant_met_free_survival_days; survival_time_days; disease_free_survival_days; time_to_distant_metastasis_days.
+First split this variable into 4 different columns and delete the original column.
+
+```{r}
+TBIG$distant_met_free_survival_days <- sapply(strsplit(as.character(TBIG$T), ","), "[", 1)
+TBIG$survival_time_days <- sapply(strsplit(as.character(TBIG$T), ","), "[", 2)
+TBIG$disease_free_survival_days <- sapply(strsplit(as.character(TBIG$T), ","), "[", 3)
+TBIG$time_to_distant_metastasis_days <- sapply(strsplit(as.character(TBIG$T), ","), "[", 4)
+TBIG$T <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(TBIG) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "overal_survival",
+                 "angio_invasion_indicator",
+                 "histologic_diagnosis",
+                 "lymphocyte_infiltration",
+                 "NPI",
+                 "type_treatment",
+                 "age_at_initial_pathologic_diagnosis",
+                 "ER_status",
+                 "cell_file",
+                 "histology_differentiation_grade",
+                 "series",
+                 "lymph_node_status",
+                 "risk_AOL_indicator",
+                 "risk_NPI_indicator",
+                 "risk_SG",
+                 "tumor_size_cm",
+                 "risk_veridex_indicator",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR",
+                 "distant_met_free_survival_event",
+                 "vital_status",
+                 "disease_free_survival_event",
+                 "distant_metastasis_event",
+                 "distant_met_free_survival_days", 
+                 "survival_time_days", 
+                 "disease_free_survival_days", 
+                 "time_to_distant_metastasis_days")
+```
+
+Add variable pathology_T_stage.
+```{r}
+TBIG$pathology_T_stage[is.na(TBIG$tumor_size_cm)] <- NA
+TBIG$pathology_T_stage[TBIG$tumor_size_cm <= 0.1] <- "T1mi"
+TBIG$pathology_T_stage[TBIG$tumor_size_cm > 0.1 & TBIG$tumor_size_cm <= 0.5] <- "T1a"
+TBIG$pathology_T_stage[TBIG$tumor_size_cm > 0.5 & TBIG$tumor_size_cm <= 1] <- "T1b"
+TBIG$pathology_T_stage[TBIG$tumor_size_cm > 1 & TBIG$tumor_size_cm <= 2] <- "T1c"
+TBIG$pathology_T_stage[TBIG$tumor_size_cm > 2 & TBIG$tumor_size_cm <= 5] <- "T2"
+TBIG$pathology_T_stage[TBIG$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Adjust values for variable ER_status to "ER-" and "ER+".
+```{r}
+TBIG$ER_status <- as.factor(TBIG$ER_status)
+levels(TBIG$ER_status)
+levels(TBIG$ER_status) <- c("ER-", "ER+")
+```
+
+Adjust values for variable histology_differentiation_grade to "G1", "G2", "G3".
+```{r}
+TBIG$histology_differentiation_grade <- as.factor(TBIG$histology_differentiation_grade)
+levels(TBIG$histology_differentiation_grade)
+levels(TBIG$histology_differentiation_grade) <- c("G1", "G2", "G3")
+```
+
+Adjust values for variable lymph_node_status to "LN-"
+```{r}
+TBIG$lymph_node_status <- as.factor(TBIG$lymph_node_status)
+levels(TBIG$lymph_node_status)
+levels(TBIG$lymph_node_status) <- c("LN-")
+```
+
+Only extract numeric values of the last 8 columns of this dataset.
+"distant_met_free_survival_event",
+"vital_status",
+"disease_free_survival_event",
+"distant_metastasis_event",
+"distant_met_free_survival_days", 
+"survival_time_days", 
+"disease_free_survival_days", 
+"time_to_distant_metastasis_days"
+```{r}
+TBIG$distant_met_free_survival_event <- as.factor(gsub("\\D", "", TBIG$distant_met_free_survival_event))
+TBIG$vital_status <- as.factor(gsub("\\D", "", TBIG$vital_status))
+TBIG$disease_free_survival_event <- as.factor(gsub("\\D", "", TBIG$disease_free_survival_event))
+TBIG$distant_metastasis_event <- as.factor(gsub("\\D", "", TBIG$distant_metastasis_event))
+TBIG$distant_met_free_survival_days <- as.numeric(gsub("\\D", "", TBIG$distant_met_free_survival_days))
+TBIG$survival_time_days <- as.numeric(gsub("\\D", "", TBIG$survival_time_days))
+TBIG$disease_free_survival_days <- as.numeric(gsub("\\D", "", TBIG$disease_free_survival_days))
+TBIG$time_to_distant_metastasis_days <- as.numeric(gsub("\\D", "", TBIG$time_to_distant_metastasis_days))
+```
+
+Adjust values for variable vital_status to "dead" and "alive",
+```{r}
+TBIG$vital_status <- as.factor(TBIG$vital_status)
+levels(TBIG$vital_status)
+levels(TBIG$vital_status) <- c("alive", "dead")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+TBIG$disease_free_survival_event <- as.factor(TBIG$disease_free_survival_event)
+levels(TBIG$disease_free_survival_event)
+levels(TBIG$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+TBIG$DMFS_10Y_EVENT <- as.factor(TBIG$DMFS_10Y_EVENT)
+levels(TBIG$DMFS_10Y_EVENT)
+levels(TBIG$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change values of distant_met_free_survival_event.
+```{r}
+TBIG$distant_met_free_survival_event <- as.factor(TBIG$distant_met_free_survival_event)
+levels(TBIG$distant_met_free_survival_event)
+levels(TBIG$distant_met_free_survival_event) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+TBIG[TBIG == ""] <- NA
+TBIG[TBIG == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_days", "distant_met_free_survival_event", "distant_met_free_survival_days", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+TBIG[, setdiff(refcols, names(TBIG))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+TBIG <- TBIG[, c(refcols, setdiff(names(TBIG), refcols))]
+```
+
+Save dataframe TBIG with newly assigned variable names as csv file.
+```{r}
+write.csv(TBIG, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE7390_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+-------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **YAU2**
+```{r}
+names(YAU2)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(YAU2$Sample.ID, YAU2$Barcode)
+YAU2$Barcode <- NULL
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(YAU2) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "disease_free_survival_years",
+                 "ER_status",
+                 "age_at_initial_pathologic_diagnosis",
+                 "lymph_node_status",
+                 "disease_free_survival_event",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR")
+```
+
+Adjust values for variable ER_status. From "TRUE" to "ER+"
+```{r}
+YAU2$ER_status <- as.factor(YAU2$ER_status)
+levels(YAU2$ER_status)
+levels(YAU2$ER_status) <- c("ER+")
+```
+
+Adjust values for variable lymph_node_status. From "N0" to "LN-".
+```{r}
+levels(YAU2$lymph_node_status)
+levels(YAU2$lymph_node_status) <- c("LN-")
+```
+
+Adjust values for variable disease_free_survival_event. From "1" to "1" and from "NA" to "0".
+```{r}
+YAU2$disease_free_survival_event[YAU2$disease_free_survival_event == "1"] <- "1"
+YAU2$disease_free_survival_event[is.na(YAU2$disease_free_survival_event)] <- "0"
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+YAU2$disease_free_survival_event <- as.factor(YAU2$disease_free_survival_event)
+levels(YAU2$disease_free_survival_event)
+levels(YAU2$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+YAU2$DMFS_10Y_EVENT <- as.factor(YAU2$DMFS_10Y_EVENT)
+levels(YAU2$DMFS_10Y_EVENT)
+levels(YAU2$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+YAU2[YAU2 == ""] <- NA
+YAU2[YAU2 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+YAU2[, setdiff(refcols, names(YAU2))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+YAU2 <- YAU2[, c(refcols, setdiff(names(YAU2), refcols))]
+```
+
+Save dataframe YAU2 with newly assigned variable names as csv file.
+```{r}
+write.csv(YAU2, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE7378_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **UPSI**
+```{r}
+names(UPSI)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+```{r}
+identical(UPSI$Sample.ID, UPSI$Barcode)
+UPSI$Barcode <- NULL
+```
+
+Variable "UPSI$All.patients..1.included.in.survival.analysis." contains value "1" for all NUH samples. These samples were used for a previous survival analysis. It was decided that this variable should be deleted. Does not contain relevant information.
+```{r}
+UPSI$All.patients..1.included.in.survival.analysis.
+UPSI$All.patients..1.included.in.survival.analysis. <- NULL
+```
+
+Variable INDEX.ID is very similar to sample_title column and not applicable for NUH group. Only contains redundant information.
+```{r}
+UPSI$INDEX..ID. <- NULL
+```
+
+Change variable values for tumor size from mm to cm, so divide by 10.
+```{r}
+UPSI$Tumor.size..mm. <- UPSI$Tumor.size..mm./10
+```
+
+Rename variable tumor size mm to "tumor_size_cm".
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(UPSI) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "disease_free_survival_event",
+                 "disease_free_survival_years",
+                 "ER_status",
+                 "ER_endocrine_therapy_only_1=included_in_survival_analysis",
+                 "histology_differention_grade",
+                 "genetic_grade_signature_status_sws_classifier",
+                 "lymph_node_status",
+                 "sample_title2",
+                 "No_systemic_therapy_1=included_in_survival_analysis",
+                 "probability1_by_sws_classifier",
+                 "probability3_by_sws_classifier",
+                 "age_at_initial_pathologic_diagnosis",
+                 "histologic_grade",
+                 "p53_mutation_status",
+                 "tumor_size_cm",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR")
+```
+
+Add variable pathology_T_stage.
+```{r}
+UPSI$pathology_T_stage[is.na(UPSI$tumor_size_cm)] <- NA
+UPSI$pathology_T_stage[UPSI$tumor_size_cm <= 0.1] <- "T1mi"
+UPSI$pathology_T_stage[UPSI$tumor_size_cm > 0.1 & UPSI$tumor_size_cm <= 0.5] <- "T1a"
+UPSI$pathology_T_stage[UPSI$tumor_size_cm > 0.5 & UPSI$tumor_size_cm <= 1] <- "T1b"
+UPSI$pathology_T_stage[UPSI$tumor_size_cm > 1 & UPSI$tumor_size_cm <= 2] <- "T1c"
+UPSI$pathology_T_stage[UPSI$tumor_size_cm > 2 & UPSI$tumor_size_cm <= 5] <- "T2"
+UPSI$pathology_T_stage[UPSI$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Change values of ER_status variable to standardized values "ER+", "ER-", "NA".
+```{r}
+levels(UPSI$ER_status)
+levels(UPSI$ER_status) <- c(NA, "ER-", "Unknown", "ER+")
+```
+
+All samples with NA values for the variable histology differention grade are from a different cohort (NUH). This information can be found in the column "histologic_grade".
+Put this information in the histology_differention_grade column and delete the redundant column.
+```{r}
+NUH_differentiation_grades <- UPSI[which(is.na(UPSI$histology_differention_grade)),]$histologic_grade
+UPSI$histology_differention_grade[is.na(UPSI$histology_differention_grade)] <- NUH_differentiation_grades
+UPSI$histologic_grade <- NULL
+```
+
+Replace data in the field histology_differention_grade to "NA", "GX", G1", "G2", "G3", "G4"
+```{r}
+UPSI$histology_differention_grade[UPSI$histology_differention_grade == "Grade2"] <- "G2"
+UPSI$histology_differention_grade[UPSI$histology_differention_grade == 1] <- "G1"
+UPSI$histology_differention_grade[UPSI$histology_differention_grade == 2] <- "G2"
+UPSI$histology_differention_grade[UPSI$histology_differention_grade == 3] <- "G3"
+UPSI$histology_differention_grade[UPSI$histology_differention_grade == 4] <- "G4"
+```
+
+Change values of lymph_node_status variable to standardized values "LN+", "LN-", "NA", "Unknown".
+```{r}
+levels(UPSI$lymph_node_status)
+levels(UPSI$lymph_node_status) <- c(NA, "LN-", "Unknown", "LN+")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+UPSI$disease_free_survival_event <- as.factor(UPSI$disease_free_survival_event)
+levels(UPSI$disease_free_survival_event)
+levels(UPSI$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+UPSI$DMFS_10Y_EVENT <- as.factor(UPSI$DMFS_10Y_EVENT)
+levels(UPSI$DMFS_10Y_EVENT)
+levels(UPSI$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+UPSI[UPSI == ""] <- NA
+UPSI[UPSI == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+UPSI[, setdiff(refcols, names(UPSI))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+UPSI <- UPSI[, c(refcols, setdiff(names(UPSI), refcols))]
+```
+
+Save dataframe UPSI with newly assigned variable names as csv file.
+```{r}
+write.csv(UPSI, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE4922.GPL96_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+View original variable names in dataset **UPSI2**
+```{r}
+names(UPSI2)
+```
+
+Variable "sample.ID"" seems to be identical to variable "Barcode" (by visual inspection).
+Check this and drop "Barcode"" variable
+
+```{r}
+identical(UPSI2$Sample.ID, UPSI2$Barcode)
+UPSI2$Barcode <- NULL
+```
+
+Variable "UPSI2$All.patients..1.included.in.survival.analysis." contains value "1" for all NUH samples. These samples were used for a previous survival analysis. It was decided that this variable should be deleted. Does not contain relevant information.
+```{r}
+UPSI2$All.patients..1.included.in.survival.analysis.
+UPSI2$All.patients..1.included.in.survival.analysis. <- NULL
+```
+
+Variable INDEX.ID is very similar to sample_title column and not applicable for NUH group. Only contains redundant information.
+```{r}
+UPSI2$INDEX..ID. <- NULL
+```
+
+Change variable values for tumor size from mm to cm, so divide by 10.
+```{r}
+UPSI2$Tumor.size..mm. <- UPSI2$Tumor.size..mm./10
+```
+
+Change the variable names to standardized variable names as assigned in excel file GXB_Clinical_Vars.xlsx
+```{r}
+names(UPSI2) <- c("sample.ID",
+                 "array_sample_id",
+                 "sample_title",
+                 "disease_free_survival_event",
+                 "disease_free_survival_years",
+                 "ER_status",
+                 "ER_endocrine_therapy_only_1=included_in_survival_analysis",
+                 "histology_differention_grade",
+                 "genetic_grade_signature_status_sws_classifier",
+                 "lymph_node_status",
+                 "sample_title2",
+                 "No_systemic_therapy_1=included_in_survival_analysis",
+                 "probability1_by_sws_classifier",
+                 "probability3_by_sws_classifier",
+                 "age_at_initial_pathologic_diagnosis",
+                 "histologic_grade",
+                 "p53_mutation_status",
+                 "tumor_size_cm",
+                 "IMS",
+                 "DMFS_10Y_TIME",
+                 "DMFS_10Y_EVENT",
+                 "IBS",
+                 "IDS",
+                 "ICR")
+```
+
+Add variable pathology_T_stage.
+```{r}
+UPSI2$pathology_T_stage[is.na(UPSI2$tumor_size_cm)] <- NA
+UPSI2$pathology_T_stage[UPSI2$tumor_size_cm <= 0.1] <- "T1mi"
+UPSI2$pathology_T_stage[UPSI2$tumor_size_cm > 0.1 & UPSI2$tumor_size_cm <= 0.5] <- "T1a"
+UPSI2$pathology_T_stage[UPSI2$tumor_size_cm > 0.5 & UPSI2$tumor_size_cm <= 1] <- "T1b"
+UPSI2$pathology_T_stage[UPSI2$tumor_size_cm > 1 & UPSI2$tumor_size_cm <= 2] <- "T1c"
+UPSI2$pathology_T_stage[UPSI2$tumor_size_cm > 2 & UPSI2$tumor_size_cm <= 5] <- "T2"
+UPSI2$pathology_T_stage[UPSI2$tumor_size_cm > 5] <- "T3/T4"
+```
+
+Change values of ER_status variable to standardized values "ER+", "ER-", "NA".
+```{r}
+levels(UPSI2$ER_status)
+levels(UPSI2$ER_status) <- c(NA, "ER-", "Unknown", "ER+")
+```
+
+All samples with NA values for the variable histology differention grade are from a different cohort (NUH). This information can be found in the column "histologic_grade".
+Put this information in the histology_differention_grade column and delete the redundant column.
+```{r}
+NUH_differentiation_grades <- UPSI2[which(is.na(UPSI2$histology_differention_grade)),]$histologic_grade
+UPSI2$histology_differention_grade[is.na(UPSI2$histology_differention_grade)] <- NUH_differentiation_grades
+UPSI2$histologic_grade <- NULL
+```
+
+Replace data in the field histology_differention_grade to "NA", "GX", G1", "G2", "G3", "G4"
+```{r}
+UPSI2$histology_differention_grade[UPSI2$histology_differention_grade == "Grade2"] <- "G2"
+UPSI2$histology_differention_grade[UPSI2$histology_differention_grade == 1] <- "G1"
+UPSI2$histology_differention_grade[UPSI2$histology_differention_grade == 2] <- "G2"
+UPSI2$histology_differention_grade[UPSI2$histology_differention_grade == 3] <- "G3"
+UPSI2$histology_differention_grade[UPSI2$histology_differention_grade == 4] <- "G4"
+```
+
+Change values of lymph_node_status variable to standardized values "LN+", "LN-", "NA", "NA".
+```{r}
+levels(UPSI2$lymph_node_status)
+levels(UPSI2$lymph_node_status) <- c(NA, "LN-", NA, "LN+")
+```
+
+For variable disease_free_survival_event, change values to "DiseaseFree" and "Recurred/Progressed"
+```{r}
+UPSI2$disease_free_survival_event <- as.factor(UPSI2$disease_free_survival_event)
+levels(UPSI2$disease_free_survival_event)
+levels(UPSI2$disease_free_survival_event) <- c("DiseaseFree", "Recurred/Progressed")
+```
+
+Adjust values for variable DMFS_10Y_EVENT to "DistantMetastasisFree" and "DistantMetastasis".
+```{r}
+UPSI2$DMFS_10Y_EVENT <- as.factor(UPSI2$DMFS_10Y_EVENT)
+levels(UPSI2$DMFS_10Y_EVENT)
+levels(UPSI2$DMFS_10Y_EVENT) <- c("DistantMetastasisFree", "DistantMetastasis")
+```
+
+Change all empty fields to NA values.
+```{r}
+UPSI2[UPSI2 == ""] <- NA
+UPSI2[UPSI2 == " "] <- NA
+```
+
+Change the order of the columns in the dataset to predetermined order (refcols).
+First define refcols.
+```{r}
+refcols <- c("sample.ID", "array_sample_id", "sample_title", "series", "IMS", "IBS", "IDS", "ICR", "DMFS_10Y_EVENT", "DMFS_10Y_TIME", "disease_free_survival_event", "disease_free_survival_years", "distant_met_free_survival_event", "distant_met_free_survival", "age_at_initial_pathologic_diagnosis", "lymph_node_status", "ER_status", "PR_status", "histology_differentiation_grade", "tumor_size_cm", "pathology_T_stage")
+```
+
+Find variables which are included in the fixed list of variables, but which are not present in the dataset using the setdiff function.
+Add these variable(s) to the dataset with NA values for all fields.
+```{r}
+UPSI2[, setdiff(refcols, names(UPSI2))] <- NA
+```
+
+Now, reorder the columns in the order of refcols and add all other remaining columns (defined by setdiff function, this time to find values included in names(dataset), but not in refcols.)
+```{r}
+UPSI2 <- UPSI2[, c(refcols, setdiff(names(UPSI2), refcols))]
+```
+
+Save dataframe UPSI2 with newly assigned variable names as csv file.
+```{r}
+write.csv(UPSI2, file = "C:\\Users\\lenovo s500\\Dropbox\\DB-LAB\\Projects\\GXB breast cancer\\adjusted sample annotation files\\GSE4922.GPL97_appended.meta.data_v1.csv", row.names = FALSE)
+```
+
+------------------------------------------------------------------------------------------------------------------------------------------
